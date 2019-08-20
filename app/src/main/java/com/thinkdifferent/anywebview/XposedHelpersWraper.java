@@ -1,4 +1,4 @@
-package com.thinkdiffrent.anywebview;
+package com.thinkdifferent.anywebview;
 
 import android.content.res.Resources;
 import android.util.Log;

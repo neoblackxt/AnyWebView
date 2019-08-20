@@ -1,4 +1,4 @@
-package com.thinkdiffrent.anywebview;
+package com.thinkdifferent.anywebview;
 
 import android.content.pm.PackageInfo;
 
@@ -9,12 +9,12 @@ import java.lang.reflect.Field;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-import static com.thinkdiffrent.anywebview.XposedHelpersWraper.findAndHookConstructor;
-import static com.thinkdiffrent.anywebview.XposedHelpersWraper.findAndHookMethod;
-import static com.thinkdiffrent.anywebview.XposedHelpersWraper.findClass;
-import static com.thinkdiffrent.anywebview.XposedHelpersWraper.findConstructorBestMatch;
-import static com.thinkdiffrent.anywebview.XposedHelpersWraper.findFirstFieldByExactType;
-import static com.thinkdiffrent.anywebview.XposedHelpersWraper.log;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.findAndHookConstructor;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.findAndHookMethod;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.findClass;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.findConstructorBestMatch;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.findFirstFieldByExactType;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.log;
 
 public class AnyWebView extends BaseXposedHookLoadPackage {
 
