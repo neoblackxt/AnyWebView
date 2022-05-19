@@ -23,6 +23,10 @@ android {
     namespace 'com.thinkdifferent.anywebview'
 }
 
+repositories {
+    jcenter();
+}
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     compileOnly 'de.robv.android.xposed:api:53'
