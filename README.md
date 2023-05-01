@@ -9,6 +9,10 @@ Android Framework should be selected in LSPosed.
 A webview app must be installed for all users (or in all spaces) to be selectable. Maybe deleting redundant users is alternative.
 adb command:
 
+Enabling "[redundant packages](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/quick-start.md#valid-package-is-not-installed_enabled-for-all-users)" (Maybe it won't work, but that's OK.):
+
+`adb shell cmd webviewupdate enable-redundant-packages`
+
 Get USER_ID list:
 
 `adb shell pm list users`
