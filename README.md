@@ -2,14 +2,22 @@
 
 Any WebView is OK!
 
+### Feature
+
+**THIS IS AN EXPERIMENTAL BRANCH, IT IS PROBABLY UNSTABLE.**
+
+It tries to detect all system webviews and adds them into the developer options.
+
 <img src=".github/webviews.jpg" width="720"/>
+
+### Usage
 
 Android Framework should be selected in LSPosed.
 
 A webview app must be installed for all users (or in all spaces) to be selectable. Maybe deleting redundant users is alternative.
 adb command:
 
-Enabling "[redundant packages](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/quick-start.md#valid-package-is-not-installed_enabled-for-all-users)" (Maybe it won't work, but that's OK.):
+Enable "[redundant packages](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/quick-start.md#valid-package-is-not-installed_enabled-for-all-users)" (Maybe it won't work, but that's OK.):
 
 `adb shell cmd webviewupdate enable-redundant-packages`
 
@@ -40,3 +48,19 @@ Delete a user (be careful, you may lose important data):
 All the `adb shell pm ...` commands above can be run in an Android terminal simulator(root access granted) as `pm ...`
 
 Reboot to take effect.
+
+### Learn More (For Developers)
+
+[WebView quick start](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/quick-start.md)
+
+[WebView for AOSP system integrators](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/aosp-system-integration.md)
+
+[WebView Architecture](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/architecture.md)
+
+[Installing SystemWebView](https://github.com/bromite/bromite/wiki/Installing-SystemWebView)
+
+[android_webview/nonembedded](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/nonembedded/)
+
+[WebView Providers](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/webview-providers.md)
+
+[WebViewFactory.java](https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/webkit/WebViewFactory.java)
