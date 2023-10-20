@@ -55,6 +55,10 @@ Can I set Chrome as the system webview implementation?
 
 Only supported on Android 8-9, not supported on Android 10+. It is Google's policy that Google Chrome app is no longer the WebView provider in Android 10. Even though it is listed in the WebView implementation, it does not work on Android 10+. Related discussion: [AnyWebView#12](https://github.com/neoblackxt/AnyWebView/issues/12#issuecomment-1644258502)
 
+Is Bromite/Mulch/Vanadium etc. system webview supported?
+
+Yes.
+
 ### Learn More (For Developers)
 
 [WebView quick start](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/quick-start.md)
@@ -70,3 +74,4 @@ Only supported on Android 8-9, not supported on Android 10+. It is Google's poli
 [WebView Providers](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/webview-providers.md)
 
 [WebViewFactory.java](https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/webkit/WebViewFactory.java)
+
