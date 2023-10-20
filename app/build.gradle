@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
     defaultConfig {
         applicationId "com.thinkdifferent.anywebview"
         minSdkVersion 24
-        targetSdkVersion 31
-        versionCode 2
-        versionName '1.1'
+        targetSdkVersion 33
+        versionCode 3
+        versionName '1.2'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -24,7 +24,8 @@ android {
 }
 
 repositories {
-    jcenter();
+    mavenCentral();
+    jcenter()
 }
 
 dependencies {

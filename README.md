@@ -2,12 +2,24 @@
 
 Any WebView is OK!
 
+### Feature
+
+**THIS IS AN EXPERIMENTAL BRANCH, IT IS PROBABLY UNSTABLE.**
+
+It tries to detect all system webviews and add them to the developer options -> WebView implementation list.
+
 <img src=".github/webviews.jpg" width="720"/>
+
+### Usage
 
 Android Framework should be selected in LSPosed.
 
 A webview app must be installed for all users (or in all spaces, so-called Dual app, Second space, etc.) to be selectable. Maybe deleting redundant users is alternative.
 adb command:
+
+Enable "[redundant packages](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/quick-start.md#valid-package-is-not-installed_enabled-for-all-users)" (Maybe it won't work, but that's OK.):
+
+`adb shell cmd webviewupdate enable-redundant-packages`
 
 Get USER_ID list:
 
@@ -45,5 +57,21 @@ Only supported on Android 8-9, not supported on Android 10+. It is Google's poli
 
 Is Bromite/Mulch/Vanadium etc. system webview supported?
 
-Only Bromite system webview is supported on current branch. All of them are supported on the [experimental branch](https://github.com/neoblackxt/AnyWebView/tree/experimental), you can download the apk from [pre-release](https://github.com/neoblackxt/AnyWebView/releases/tag/v1.2).
+Yes.
+
+### Learn More (For Developers)
+
+[WebView quick start](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/quick-start.md)
+
+[WebView for AOSP system integrators](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/aosp-system-integration.md)
+
+[WebView Architecture](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/architecture.md)
+
+[Installing SystemWebView](https://github.com/bromite/bromite/wiki/Installing-SystemWebView)
+
+[android_webview/nonembedded](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/nonembedded/)
+
+[WebView Providers](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/webview-providers.md)
+
+[WebViewFactory.java](https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/webkit/WebViewFactory.java)
 
