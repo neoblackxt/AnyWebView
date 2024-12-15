@@ -123,7 +123,7 @@ public class AnyWebView extends BaseXposedHookLoadPackage {
                         int size = webviewPkgNameList.size();
                         Object webViewProviders = Array.newInstance(classWebViewProviderInfo, size);
                         for (int i = 0; i < size; i++) {
-                            Array.set(webViewProviders, i, constructorWebViewProviderInfo.newInstance(webviewPkgNameList.get(i), webviewLabelList.get(i), false, false, webviewSignaturesList.get(i)));
+                            Array.set(webViewProviders, i, constructorWebViewProviderInfo.newInstance(webviewPkgNameList.get(i), webviewLabelList.get(i), true, false, webviewSignaturesList.get(i)));
                         }
 
                         Field mWebViewProviderPackages = findFirstFieldByExactType(classSystemImpl, classWebViewProviderInfoArray);
