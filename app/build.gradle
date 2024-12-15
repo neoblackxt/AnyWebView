@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
+    compileSdk 35
     defaultConfig {
         applicationId "com.thinkdifferent.anywebview"
-        minSdkVersion 24
-        targetSdkVersion 33
+        minSdk 24
+        targetSdk 35
         versionCode 3
         versionName '1.2'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -17,15 +17,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = 1.8
-        targetCompatibility = 1.8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     namespace 'com.thinkdifferent.anywebview'
 }
 
 repositories {
-    mavenCentral();
-    jcenter()
+    google()
+    mavenCentral()
+    maven { url 'https://api.xposed.info/' }
 }
 
 dependencies {
