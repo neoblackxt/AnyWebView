@@ -22,13 +22,38 @@ import io.github.libxposed.api.XposedModuleInterface;
 public class AnyWebViewModule extends XposedModule {
 
     private static final String TAG = "anywebview";
+    private static final String VIA = "libxposed";
 
-    private final WebViewProviderInjector injector = new WebViewProviderInjector();
+    /**
+     * Routes through XposedInterface.log() rather than android.util.Log: Vector does not surface
+     * android.util.Log from libxposed modules, so the latter is silently dropped.
+     */
+    private final Logger logger = new Logger() {
+        @Override
+        public void d(String message) {
+            log(Log.DEBUG, TAG, message);
+        }
+
+        @Override
+        public void w(String message) {
+            log(Log.WARN, TAG, message);
+        }
+
+        @Override
+        public void e(String message, Throwable t) {
+            log(Log.ERROR, TAG, message, t);
+        }
+    };
+
+    private final WebViewProviderInjector injector = new WebViewProviderInjector(VIA, logger);
 
     @Override
     public void onSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
         final ClassLoader classLoader = param.getClassLoader();
         try {
+            logger.d(VIA + ": entry point loaded (framework=" + getFrameworkName()
+                    + " " + getFrameworkVersion() + ", api=" + getApiVersion()
+                    + "), hooking getWebViewPackages");
             Class<?> classSystemImpl = classLoader.loadClass(
                     "com.android.server.webkit.SystemImpl");
             Method getWebViewPackages = classSystemImpl.getDeclaredMethod("getWebViewPackages");
@@ -42,7 +67,7 @@ public class AnyWebViewModule extends XposedModule {
                 }
             });
         } catch (Throwable t) {
-            Log.e(TAG, "failed to hook SystemImpl.getWebViewPackages", t);
+            logger.e(VIA + ": failed to hook SystemImpl.getWebViewPackages", t);
         }
     }
 }

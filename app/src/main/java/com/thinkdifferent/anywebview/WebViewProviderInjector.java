@@ -5,7 +5,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Base64;
-import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -28,11 +27,20 @@ import java.util.List;
  */
 public final class WebViewProviderInjector {
 
-    private static final String TAG = "anywebview";
     private static final String WEBVIEW_LIBRARY_META_DATA = "com.android.webview.WebViewLibrary";
+
+    /** Which entry point owns this instance, for log attribution. */
+    private final String via;
+    /** Framework-appropriate log sink, supplied by the entry point. */
+    private final Logger logger;
 
     private Class<?> classWebViewProviderInfo;
     private Object extraProviders;
+
+    public WebViewProviderInjector(String via, Logger logger) {
+        this.via = via;
+        this.logger = logger;
+    }
 
     /**
      * Returns a WebViewProviderInfo[] consisting of stockProviders plus every installed provider
@@ -56,12 +64,12 @@ public final class WebViewProviderInjector {
             if (extraProviders == null) {
                 Context context = findSystemContext(systemImpl, classLoader);
                 if (context == null) {
-                    Log.w(TAG, "no system Context, leaving provider list untouched");
+                    logger.w(via + ": no system Context, leaving provider list untouched");
                     return null;
                 }
                 PackageManager pm = context.getPackageManager();
                 if (pm == null) {
-                    Log.w(TAG, "no PackageManager, leaving provider list untouched");
+                    logger.w(via + ": no PackageManager, leaving provider list untouched");
                     return null;
                 }
                 classWebViewProviderInfo = classLoader.loadClass("android.webkit.WebViewProviderInfo");
@@ -80,10 +88,10 @@ public final class WebViewProviderInjector {
             Object merged = Array.newInstance(classWebViewProviderInfo, stockLen + extraLen);
             System.arraycopy(stockProviders, 0, merged, 0, stockLen);
             System.arraycopy(extraProviders, 0, merged, stockLen, extraLen);
-            Log.d(TAG, "appended " + extraLen + " provider(s) to " + stockLen + " stock entries");
+            logger.d(via + ": appended " + extraLen + " provider(s) to " + stockLen + " stock entries");
             return merged;
         } catch (Throwable t) {
-            Log.e(TAG, "failed to append WebView providers", t);
+            logger.e(via + ": failed to append WebView providers", t);
             return null;
         }
     }
@@ -99,7 +107,7 @@ public final class WebViewProviderInjector {
      * (its SystemInterface methods take a Context parameter instead), so fall back to
      * system_server's own ActivityThread, which is present on every release.
      */
-    private static Context findSystemContext(Object systemImpl, ClassLoader classLoader) {
+    private Context findSystemContext(Object systemImpl, ClassLoader classLoader) {
         if (systemImpl != null) {
             try {
                 Field field = systemImpl.getClass().getDeclaredField("mContext");
@@ -111,7 +119,7 @@ public final class WebViewProviderInjector {
             } catch (NoSuchFieldException expectedOnOlderReleases) {
                 // Pre-Android-15 SystemImpl has no Context field; handled by the fallback below.
             } catch (Throwable t) {
-                Log.w(TAG, "could not read SystemImpl.mContext", t);
+                logger.e(via + ": could not read SystemImpl.mContext", t);
             }
         }
         try {
@@ -124,7 +132,7 @@ public final class WebViewProviderInjector {
                         .invoke(activityThread);
             }
         } catch (Throwable t) {
-            Log.w(TAG, "could not reach ActivityThread system context", t);
+            logger.e(via + ": could not reach ActivityThread system context", t);
         }
         return null;
     }
@@ -147,16 +155,16 @@ public final class WebViewProviderInjector {
         for (int i = 0; i < stockLen; i++) {
             stockPkgNames.add((String) packageNameField.get(Array.get(stockProviders, i)));
         }
-        Log.d(TAG, "stock providers:" + stockPkgNames);
+        logger.d(via + ": stock providers:" + stockPkgNames);
 
         List<PackageInfo> installedPackageInfoList = pm.getInstalledPackages(
                 PackageManager.MATCH_ALL | PackageManager.GET_META_DATA
                         | PackageManager.GET_SIGNATURES);
         if (installedPackageInfoList == null) {
-            Log.w(TAG, "installedPackageInfoList is null");
+            logger.w(via + ": installedPackageInfoList is null");
             return Array.newInstance(classWebViewProviderInfo, 0);
         }
-        Log.d(TAG, "installedPackageInfoList length:" + installedPackageInfoList.size());
+        logger.d(via + ": installedPackageInfoList length:" + installedPackageInfoList.size());
 
         List<Object> extras = new ArrayList<>();
         for (PackageInfo packageInfo : installedPackageInfoList) {
@@ -172,17 +180,17 @@ public final class WebViewProviderInjector {
                 continue;
             }
             if (stockPkgNames.contains(packageInfo.packageName)) {
-                Log.d(TAG, "skipping already-declared provider:" + packageInfo.packageName);
+                logger.d(via + ": skipping already-declared provider:" + packageInfo.packageName);
                 continue;
             }
             if (packageInfo.signatures == null || packageInfo.signatures.length == 0) {
-                Log.d(TAG, "skipping unsigned provider:" + packageInfo.packageName);
+                logger.d(via + ": skipping unsigned provider:" + packageInfo.packageName);
                 continue;
             }
 
             String label = pm.getApplicationLabel(packageInfo.applicationInfo).toString();
             String[] signatures = encodeSignatures(packageInfo);
-            Log.d(TAG, "adding provider:" + packageInfo.packageName + " label:" + label
+            logger.d(via + ": adding provider:" + packageInfo.packageName + " label:" + label
                     + " signatures:" + signatures.length);
             extras.add(constructorWebViewProviderInfo.newInstance(
                     packageInfo.packageName, label,

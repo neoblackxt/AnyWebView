@@ -17,7 +17,28 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 public class AnyWebView extends BaseXposedHookLoadPackage {
 
-    private final WebViewProviderInjector injector = new WebViewProviderInjector();
+    private static final String VIA = "de.robv";
+
+    /** Vector surfaces android.util.Log from de.robv modules in logcat. */
+    private static final Logger LOGGER = new Logger() {
+        @Override
+        public void d(String message) {
+            log(message);
+        }
+
+        @Override
+        public void w(String message) {
+            log(message);
+        }
+
+        @Override
+        public void e(String message, Throwable t) {
+            log(message);
+            log(t);
+        }
+    };
+
+    private final WebViewProviderInjector injector = new WebViewProviderInjector(VIA, LOGGER);
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
@@ -29,9 +50,10 @@ public class AnyWebView extends BaseXposedHookLoadPackage {
         Class<?> classSystemImpl = findClass(
                 "com.android.server.webkit.SystemImpl", classLoader);
         if (classSystemImpl == null) {
-            log("SystemImpl not found, nothing hooked");
+            log(VIA + ": SystemImpl not found, nothing hooked");
             return;
         }
+        log(VIA + ": entry point loaded, hooking getWebViewPackages");
         findAndHookMethod(classSystemImpl, "getWebViewPackages", new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
