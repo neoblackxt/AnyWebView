@@ -1,5 +1,6 @@
 package com.thinkdifferent.anywebview;
 
+import android.annotation.SuppressLint;
 import android.util.Log;
 
 import java.lang.reflect.Method;
@@ -47,6 +48,10 @@ public class AnyWebViewModule extends XposedModule {
 
     private final WebViewProviderInjector injector = new WebViewProviderInjector(VIA, logger);
 
+    // hook() takes java.lang.reflect.Executable (API 26+), but this suppression is safe:
+    // libxposed frameworks only exist on API 26+ (the api AAR declares minSdkVersion 26),
+    // so this class is never loaded on API 24-25, where the de.robv entry point applies.
+    @SuppressLint("NewApi")
     @Override
     public void onSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
         final ClassLoader classLoader = param.getClassLoader();
