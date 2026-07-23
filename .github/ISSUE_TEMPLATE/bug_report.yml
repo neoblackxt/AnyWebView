@@ -1,0 +1,78 @@
+name: Bug report
+description: Report a problem with the AnyWebView Xposed module
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Before you start:
+        - Make sure you are on the [latest release](https://github.com/neoblackxt/AnyWebView/releases) and have **rebooted** after activating/updating the module - the hook lives in `system_server` and only loads at boot.
+        - The pre-Android-15 code path is new since v1.4 and barely tested - reports from Android 7-14 are especially valuable, success or failure.
+  - type: dropdown
+    id: symptom
+    attributes:
+      label: What went wrong?
+      options:
+        - The APK does not install
+        - The module does not appear / cannot be activated in my Xposed framework
+        - The WebView provider is not listed in developer options
+        - The provider is selectable, but apps don't use it
+        - The device became unstable (bootloop, crashes)
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Module version
+      description: Shown in your Xposed framework's module list, e.g. 1.4
+      placeholder: "1.4"
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version and ROM
+      placeholder: "11 (API 30), stock / LineageOS / MIUI ..."
+    validations:
+      required: true
+  - type: input
+    id: framework
+    attributes:
+      label: Xposed framework and version
+      placeholder: "LSPosed 1.9.2 / Vector (libxposed) / EdXposed ..."
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: WebView provider
+      description: Package name and where it came from
+      placeholder: "e.g. org.cromite.webview from Cromite 132.x (GitHub release)"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Steps to reproduce help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Framework module log
+      description: |
+        LSPosed: Manager -> Logs, save and paste the lines tagged `anywebview`.
+        Vector / libxposed: open the framework's module log. Capture after a reboot.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: e.g. developer options -> WebView implementation list
+    validations:
+      required: false

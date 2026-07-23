@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an idea for AnyWebView
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Scope note:** AnyWebView only makes additional WebView providers selectable in developer options. It does not and cannot change WebView behavior itself - things like ad-blocking, filter lists, or provider settings UIs belong to the WebView provider (e.g. Cromite), not to this module, and will be declined.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
