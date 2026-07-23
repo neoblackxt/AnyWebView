@@ -15,4 +15,6 @@
 
 # Project exclude paths
 /app/build/
+/app/release/
 /app/build/intermediates/javac/debug/classes/
+/.idea/shelf/
