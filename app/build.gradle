@@ -31,5 +31,9 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // Both APIs are compileOnly: the frameworks provide them at runtime, and keeping the
+    // libxposed AAR off the runtime graph also keeps its minSdkVersion 26 out of the manifest
+    // merge, so the module stays installable on API 24-25 with the de.robv entry point.
     compileOnly 'de.robv.android.xposed:api:53'
+    compileOnly 'io.github.libxposed:api:101.0.1'
 }
