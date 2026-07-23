@@ -15,7 +15,7 @@ android {
         // GitHub Secrets). Without them the release build stays unsigned, so local and
         // fork builds are unaffected.
         release {
-            storeFile System.getenv("KEYSTORE_FILE") != null ? file(System.getenv("KEYSTORE_FILE")) : null
+            storeFile System.getenv("KEYSTORE_FILE") != null ? rootProject.file(System.getenv("KEYSTORE_FILE")) : null
             storePassword System.getenv("KEYSTORE_PASSWORD")
             keyAlias System.getenv("KEY_ALIAS")
             keyPassword System.getenv("KEY_PASSWORD")
