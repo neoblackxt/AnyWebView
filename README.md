@@ -57,6 +57,14 @@ Is Bromite/Mulch/Vanadium etc. system webview supported?
 
 Yes.
 
+Does the WebView need to be installed as a system app?
+
+No — a normally installed WebView APK is enough. Stock Android treats being a system app merely as a signature-check bypass, not a requirement, and AnyWebView registers each provider with its own signature so it passes validation either way.
+
+Does this still work on Android 17?
+
+It should, in theory. The internal interfaces behind this are unchanged on the AOSP master branch (Android 17) and have been stable since Android 7 — but this is theoretical analysis only, not tested on real hardware. Details: [Discussion #31](https://github.com/neoblackxt/AnyWebView/discussions/31)
+
 ### Learn More (For Developers)
 
 [WebView quick start](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/quick-start.md)
