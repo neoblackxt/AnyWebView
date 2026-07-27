@@ -8,6 +8,16 @@ It tries to detect all system webviews and add them to the developer options -> 
 
 <img src=".github/webviews.jpg" width="720"/>
 
+### Compatibility
+
+Android 7.0 is the minimum: the WebView provider-selection mechanism this app hooks was introduced in Nougat, so there is nothing to hook on older releases.
+
+Real-device reports for the latest release:
+
+* Android 10 / 11 / 12 - community confirmed (Vector SR + AOSmium WebView), see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
+* Android 16 - developer tested
+* Android 7-9, 13-15, 17 - expected to work (the hooked internals have been stable since Android 7), but not yet reported; both success and failure reports are welcome
+
 ### Usage
 
 Android Framework should be selected in LSPosed.
