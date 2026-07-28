@@ -1,0 +1,1 @@
+<p><i>AnyWebView</i> is an Xposed module that lets you select the WebView to be used. A webview app must be installed for all users (or in all spaces) to be selectable.</p>
