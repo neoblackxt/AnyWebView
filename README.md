@@ -2,6 +2,12 @@
 
 Any WebView is OK!
 
+<p>
+<a href="https://apt.izzysoft.de/packages/com.thinkdifferent.anywebview"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="28" alt="Get it at IzzyOnDroid"></a>
+<a href="https://apt.izzysoft.de/packages/com.thinkdifferent.anywebview"><img src="https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.thinkdifferent.anywebview&label=IzzyOnDroid&style=for-the-badge" height="28" alt="IzzyOnDroid version"></a>
+<a href="https://shields.rbtlog.dev/com.thinkdifferent.anywebview"><img src="https://shields.rbtlog.dev/simple/com.thinkdifferent.anywebview?style=for-the-badge" height="28" alt="RB status"></a>
+</p>
+
 ### Feature
 
 It tries to detect all system webviews and add them to the developer options -> WebView implementation list.
@@ -74,6 +80,18 @@ No — a normally installed WebView APK is enough. Stock Android treats being a 
 Does this still work on Android 17?
 
 It should, in theory. The internal interfaces behind this are unchanged on the AOSP master branch (Android 17) and have been stable since Android 7 — but this is theoretical analysis only, not tested on real hardware. Details: [Discussion #31](https://github.com/neoblackxt/AnyWebView/discussions/31)
+
+### Build
+
+- **JDK:** OpenJDK 17 (Temurin; LTS versions 11/21 also work)
+- **OS:** Linux recommended (releases are built on `ubuntu-24.04` via GitHub Actions)
+- **Command:** `./gradlew assembleRelease` -> unsigned APK at
+  `app/build/outputs/apk/release/app-release.apk`
+- **Signing:** optional, via environment variables `KEYSTORE_FILE`,
+  `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` (set by the Release workflow
+  from repository secrets; unset = unsigned build)
+
+Toolchain is pinned: Gradle 8.9 (wrapper), AGP 8.7.3, exact dependency versions.
 
 ### Learn More (For Developers)
 

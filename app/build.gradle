@@ -30,6 +30,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    dependenciesInfo {
+        // Dependency metadata blob is encrypted with a Google key and unreadable
+        // to anyone else; drop it from both artifacts (flagged by IzzyOnDroid).
+        includeInApk = false
+        includeInBundle = false
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
