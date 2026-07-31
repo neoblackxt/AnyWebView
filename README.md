@@ -18,9 +18,11 @@ It tries to detect all system webviews and add them to the developer options -> 
 
 Android 7.0 is the minimum: the WebView provider-selection mechanism this app hooks was introduced in Nougat, so there is nothing to hook on older releases.
 
+Framework requirement: v1.4's modern entry point targets libxposed API 101, so the framework must implement libxposed API >= 101 (e.g. Vector-SR, LSPosed 1.11+). JingMatrix's Vector 2.0 implements only API 100 and cannot load v1.4 - see [#32](https://github.com/neoblackxt/AnyWebView/issues/32). The legacy `de.robv` entry point is still included for pre-libxposed frameworks.
+
 Real-device reports for the latest release:
 
-* Android 10 / 11 / 12 - community confirmed (Vector SR + AOSmium WebView), see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
+* Android 10 / 11 / 12 - community confirmed (Vector SR + AOSmium/Cromite WebView), see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
 * Android 16 - developer tested
 * Android 7-9, 13-15, 17 - expected to work (the hooked internals have been stable since Android 7), but not yet reported; both success and failure reports are welcome
 
