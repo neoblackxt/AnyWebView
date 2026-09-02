@@ -77,7 +77,7 @@ Yes.
 
 Does the WebView need to be installed as a system app?
 
-No — a normally installed WebView APK is enough. Stock Android treats being a system app merely as a signature-check bypass, not a requirement, and AnyWebView registers each provider with its own signature so it passes validation either way.
+No — a normally installed WebView APK is enough. Stock Android treats being a system app merely as a signature-check bypass, not a requirement, and AnyWebView registers each provider with its own signature so it passes validation either way. This also covers forks that reuse a stock package name, such as Cromite SystemWebView (`com.android.webview`): the stock entry's declared signature is rewritten to the installed APK's, so it is selectable without a Magisk module.
 
 Does this still work on Android 17?
 

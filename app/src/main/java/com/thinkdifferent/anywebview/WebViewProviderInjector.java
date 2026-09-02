@@ -3,6 +3,7 @@ package com.thinkdifferent.anywebview;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.os.Bundle;
 import android.util.Base64;
 
@@ -14,12 +15,16 @@ import java.lang.reflect.Field;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Framework-agnostic core of the module: given the WebViewProviderInfo[] that
  * SystemImpl.getWebViewPackages() returned, produce a longer array with every installed WebView
- * provider appended.
+ * provider appended, and with stock entries whose package is installed under a different
+ * signature rewritten to carry the installed one.
  *
  * This class deliberately has no Xposed dependency of any kind, so the same logic backs both the
  * de.robv (assets/xposed_init) and libxposed (META-INF/xposed/java_init.list) entry points. Each
@@ -35,7 +40,14 @@ public final class WebViewProviderInjector {
     private final Logger logger;
 
     private Class<?> classWebViewProviderInfo;
+    private Field providerPackageNameField;
     private Object extraProviders;
+    /**
+     * Replacements for stock entries whose installed package is signed differently than the ROM
+     * config declares, keyed by package name. Filled by the same pass that computes
+     * extraProviders, so it shares that result's compute-once cache.
+     */
+    private Map<String, Object> stockSignatureOverrides;
 
     public WebViewProviderInjector(String via, Logger logger) {
         this.via = via;
@@ -44,9 +56,10 @@ public final class WebViewProviderInjector {
 
     /**
      * Returns a WebViewProviderInfo[] consisting of stockProviders plus every installed provider
-     * not already present, or null when there is nothing to add or anything went wrong. Callers
-     * substitute the returned array for the hooked method's result; returning null means "leave
-     * the original result alone".
+     * not already present, with stock entries whose package is installed under a different
+     * signature replaced by entries carrying the installed signature, or null when there is
+     * nothing to add or change or anything went wrong. Callers substitute the returned array for
+     * the hooked method's result; returning null means "leave the original result alone".
      *
      * @param systemImpl  the SystemImpl instance the hooked call was made on
      * @param classLoader the system_server class loader
@@ -73,22 +86,30 @@ public final class WebViewProviderInjector {
                     return null;
                 }
                 classWebViewProviderInfo = classLoader.loadClass("android.webkit.WebViewProviderInfo");
+                providerPackageNameField = classWebViewProviderInfo.getField("packageName");
                 Constructor<?> constructor = classWebViewProviderInfo.getConstructor(
                         /*packageName*/ String.class, /*description*/ String.class,
                         /*availableByDefault*/ boolean.class, /*isFallback*/ boolean.class,
                         /*signatures*/ String[].class);
+                stockSignatureOverrides = new HashMap<>();
                 extraProviders = buildExtraProviders(stockProviders, stockLen, pm, constructor);
             }
 
             int extraLen = Array.getLength(extraProviders);
-            if (extraLen == 0) {
+            if (extraLen == 0 && stockSignatureOverrides.isEmpty()) {
                 return null;
             }
 
             Object merged = Array.newInstance(classWebViewProviderInfo, stockLen + extraLen);
-            System.arraycopy(stockProviders, 0, merged, 0, stockLen);
+            for (int i = 0; i < stockLen; i++) {
+                Object stock = Array.get(stockProviders, i);
+                String packageName = (String) providerPackageNameField.get(stock);
+                Object override = stockSignatureOverrides.get(packageName);
+                Array.set(merged, i, override != null ? override : stock);
+            }
             System.arraycopy(extraProviders, 0, merged, stockLen, extraLen);
-            logger.d(via + ": appended " + extraLen + " provider(s) to " + stockLen + " stock entries");
+            logger.d(via + ": appended " + extraLen + " provider(s) to " + stockLen
+                    + " stock entries, rewrote signatures on " + stockSignatureOverrides.size());
             return merged;
         } catch (Throwable t) {
             logger.e(via + ": failed to append WebView providers", t);
@@ -146,16 +167,25 @@ public final class WebViewProviderInjector {
      * lookup each. Entries are marked availableByDefault so provider selection considers them,
      * and carry their own signature so providerHasValidSignature() passes without relying on a
      * debuggable build. Actual suitability is still decided downstream by validityResult().
+     *
+     * A package that reuses a stock package name is the one case appending cannot cover: the
+     * stock entry stays in the array with the signature the ROM config declares, and Cromite and
+     * other forks ship SystemWebView builds as a plain com.android.webview data app, so
+     * providerHasValidSignature() rejects the mismatched package and it never becomes
+     * selectable. Such entries are therefore recorded in stockSignatureOverrides, rewritten to
+     * carry the installed signature, whenever the installed package is signed differently than
+     * the stock entry declares. When the signature matches, the stock entry already validates
+     * the package natively and the package is skipped as before.
      */
     private Object buildExtraProviders(Object stockProviders, int stockLen, PackageManager pm,
                                        Constructor<?> constructorWebViewProviderInfo)
             throws Exception {
-        List<String> stockPkgNames = new ArrayList<>();
-        Field packageNameField = classWebViewProviderInfo.getField("packageName");
+        Map<String, Object> stockEntries = new LinkedHashMap<>();
         for (int i = 0; i < stockLen; i++) {
-            stockPkgNames.add((String) packageNameField.get(Array.get(stockProviders, i)));
+            Object stockEntry = Array.get(stockProviders, i);
+            stockEntries.put((String) providerPackageNameField.get(stockEntry), stockEntry);
         }
-        logger.d(via + ": stock providers:" + stockPkgNames);
+        logger.d(via + ": stock providers:" + stockEntries.keySet());
 
         List<PackageInfo> installedPackageInfoList = pm.getInstalledPackages(
                 PackageManager.MATCH_ALL | PackageManager.GET_META_DATA
@@ -179,8 +209,18 @@ public final class WebViewProviderInjector {
             if (awLib == null || awLib.isEmpty()) {
                 continue;
             }
-            if (stockPkgNames.contains(packageInfo.packageName)) {
-                logger.d(via + ": skipping already-declared provider:" + packageInfo.packageName);
+            Object stockEntry = stockEntries.get(packageInfo.packageName);
+            if (stockEntry != null) {
+                if (packageInfo.signatures != null && packageInfo.signatures.length > 0
+                        && !declaresInstalledSignature(stockEntry, packageInfo)) {
+                    stockSignatureOverrides.put(packageInfo.packageName,
+                            copyWithInstalledSignature(stockEntry, packageInfo,
+                                    constructorWebViewProviderInfo));
+                    logger.d(via + ": rewriting stock provider with installed signature:"
+                            + packageInfo.packageName);
+                } else {
+                    logger.d(via + ": skipping already-declared provider:" + packageInfo.packageName);
+                }
                 continue;
             }
             if (packageInfo.signatures == null || packageInfo.signatures.length == 0) {
@@ -202,6 +242,42 @@ public final class WebViewProviderInjector {
             Array.set(result, i, extras.get(i));
         }
         return result;
+    }
+
+    /**
+     * Mirrors WebViewUpdater.providerHasValidSignature(): true when any signature declared on the
+     * stock entry equals one of the installed APK's signatures.
+     */
+    private boolean declaresInstalledSignature(Object stockEntry, PackageInfo packageInfo)
+            throws Exception {
+        Signature[] declared =
+                (Signature[]) classWebViewProviderInfo.getField("signatures").get(stockEntry);
+        if (declared == null) {
+            return false;
+        }
+        for (Signature signature : declared) {
+            for (Signature installed : packageInfo.signatures) {
+                if (signature.equals(installed)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Copies a stock entry with the installed APK's signatures; packageName, description,
+     * availableByDefault and isFallback are carried over as the ROM declared them.
+     */
+    private Object copyWithInstalledSignature(Object stockEntry, PackageInfo packageInfo,
+                                              Constructor<?> constructorWebViewProviderInfo)
+            throws Exception {
+        return constructorWebViewProviderInfo.newInstance(
+                packageInfo.packageName,
+                classWebViewProviderInfo.getField("description").get(stockEntry),
+                classWebViewProviderInfo.getField("availableByDefault").get(stockEntry),
+                classWebViewProviderInfo.getField("isFallback").get(stockEntry),
+                encodeSignatures(packageInfo));
     }
 
     /**
