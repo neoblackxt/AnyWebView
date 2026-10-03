@@ -247,15 +247,23 @@ public final class WebViewProviderInjector {
     /**
      * Mirrors WebViewUpdater.providerHasValidSignature(): true when any signature declared on the
      * stock entry equals one of the installed APK's signatures.
+     *
+     * WebViewProviderInfo.signatures is Signature[] on Android 9+, but on Android 8.1 and
+     * older it holds the raw base64 config strings, so entries are examined one at a time
+     * instead of casting the array to a single type.
      */
     private boolean declaresInstalledSignature(Object stockEntry, PackageInfo packageInfo)
             throws Exception {
-        Signature[] declared =
-                (Signature[]) classWebViewProviderInfo.getField("signatures").get(stockEntry);
+        Object declared = classWebViewProviderInfo.getField("signatures").get(stockEntry);
         if (declared == null) {
             return false;
         }
-        for (Signature signature : declared) {
+        int declaredLen = Array.getLength(declared);
+        for (int i = 0; i < declaredLen; i++) {
+            Signature signature = parseDeclaredSignature(Array.get(declared, i));
+            if (signature == null) {
+                continue;
+            }
             for (Signature installed : packageInfo.signatures) {
                 if (signature.equals(installed)) {
                     return true;
@@ -263,6 +271,24 @@ public final class WebViewProviderInjector {
             }
         }
         return false;
+    }
+
+    /**
+     * Converts one declared-signature entry to a Signature: already a Signature on Android 9+,
+     * a base64 DER string on earlier releases. Returns null for anything unparseable.
+     */
+    private static Signature parseDeclaredSignature(Object entry) {
+        if (entry instanceof Signature) {
+            return (Signature) entry;
+        }
+        if (entry instanceof String) {
+            try {
+                return new Signature(Base64.decode((String) entry, Base64.DEFAULT));
+            } catch (IllegalArgumentException malformedBase64) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /**
