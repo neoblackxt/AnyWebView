@@ -19,9 +19,9 @@ hook lives in `system_server` and only loads at boot.
 
 ## Device testing wanted
 
-The v1.4 injection rework was verified on Android 16. The fallback path for
-Android 7-14 (API 24-34) is derived from AOSP sources but has had little
-real-device testing.
+The v1.4 injection rework supports Android 16. The fallback path for
+Android 7-14 (API 24-34) is derived from AOSP sources and has limited device
+coverage.
 
 If you run a pre-Android-15 device, your report - success or failure - is
 genuinely useful:

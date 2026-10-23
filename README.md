@@ -20,11 +20,11 @@ Android 7.0 is the minimum: the WebView provider-selection mechanism this app ho
 
 Framework requirement: v1.4's modern entry point targets libxposed API 101, so the framework must implement libxposed API >= 101 (e.g. Vector-SR, LSPosed 1.11+). JingMatrix's Vector 2.0 release implements only API 100 and cannot load v1.4, while newer Vector canary builds (post-2.0) implement API 101 and work - see [#32](https://github.com/neoblackxt/AnyWebView/issues/32). The legacy `de.robv` entry point is still included for pre-libxposed frameworks.
 
-Real-device reports for the latest release:
+Latest release compatibility:
 
-* Android 10 / 11 / 12 - community confirmed (Vector SR + AOSmium/Cromite WebView), see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
-* Android 16 - developer tested + community confirmed (16 QPR2, LineageOS, Vector canary + KowSU), see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
-* Android 7-9, 13-15, 17 - expected to work (the hooked internals have been stable since Android 7), but not yet reported; both success and failure reports are welcome
+* Android 10 / 11 / 12 - compatible with Vector SR + AOSmium/Cromite WebView, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
+* Android 16 - compatible with 16 QPR2, LineageOS, Vector canary + KowSU, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
+* Android 7-9, 13-15, 17 - compatibility is not established; the hooked internals have been stable since Android 7, and both success and failure reports are welcome
 
 ### Usage
 
@@ -81,7 +81,7 @@ No — a normally installed WebView APK is enough. Stock Android treats being a 
 
 Does this still work on Android 17?
 
-It should, in theory. The internal interfaces behind this are unchanged on the AOSP master branch (Android 17) and have been stable since Android 7 — but this is theoretical analysis only, not tested on real hardware. Details: [Discussion #31](https://github.com/neoblackxt/AnyWebView/discussions/31)
+Compatibility is unknown. The internal interfaces behind this are unchanged on the AOSP master branch (Android 17) and have been stable since Android 7. Details: [Discussion #31](https://github.com/neoblackxt/AnyWebView/discussions/31)
 
 ### Build
 

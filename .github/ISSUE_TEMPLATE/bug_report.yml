@@ -8,7 +8,7 @@ body:
       value: |
         Thanks for reporting! Before you start:
         - Make sure you are on the [latest release](https://github.com/neoblackxt/AnyWebView/releases) and have **rebooted** after activating/updating the module - the hook lives in `system_server` and only loads at boot.
-        - The pre-Android-15 code path is new since v1.4 and barely tested - reports from Android 7-14 are especially valuable, success or failure.
+        - The pre-Android-15 code path is new since v1.4 and has limited device coverage - reports from Android 7-14 are especially valuable, success or failure.
   - type: dropdown
     id: symptom
     attributes:
