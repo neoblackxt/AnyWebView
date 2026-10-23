@@ -85,10 +85,10 @@ Compatibility is unknown. The internal interfaces behind this are unchanged on t
 
 ### Build
 
-- **JDK:** OpenJDK 17 (Temurin; LTS versions 11/21 also work)
+- **JDK:** OpenJDK 17 (Temurin)
 - **OS:** Linux recommended (releases are built on `ubuntu-24.04` via GitHub Actions)
-- **Command:** `./gradlew assembleRelease` -> unsigned APK at
-  `app/build/outputs/apk/release/app-release.apk`
+- **Command:** `./gradlew assembleRelease` -> APK in `app/build/outputs/apk/release/`
+  (`app-release-unsigned.apk` without signing, `app-release.apk` with signing)
 - **Signing:** optional, via environment variables `KEYSTORE_FILE`,
   `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` (set by the Release workflow
   from repository secrets; unset = unsigned build)
