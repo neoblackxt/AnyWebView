@@ -22,9 +22,10 @@ import java.util.Map;
 
 /**
  * Framework-agnostic core of the module: given the WebViewProviderInfo[] that
- * SystemImpl.getWebViewPackages() returned, produce a longer array with every installed WebView
- * provider appended, and with stock entries whose package is installed under a different
- * signature rewritten to carry the installed one.
+ * SystemImpl.getWebViewPackages() returned (or, on builds where that getter was inlined
+ * away, the backing field it used to read), produce a longer array with every installed
+ * WebView provider appended, and with stock entries whose package is installed under a
+ * different signature rewritten to carry the installed one.
  *
  * This class deliberately has no Xposed dependency of any kind, so the same logic backs both the
  * de.robv (assets/xposed_init) and libxposed (META-INF/xposed/java_init.list) entry points. Each
@@ -114,6 +115,56 @@ public final class WebViewProviderInjector {
         } catch (Throwable t) {
             logger.e(via + ": failed to append WebView providers", t);
             return null;
+        }
+    }
+
+    /**
+     * Resolves the SystemImpl field holding the provider array, for builds (seen on Samsung
+     * One UI) where R8 inlined getWebViewPackages() away and every caller reads the field
+     * directly: the AOSP name first, then the only WebViewProviderInfo[]-typed field in case
+     * the build renamed it. Returns an accessible field, or null when neither exists.
+     */
+    public Field findProviderPackagesField(Class<?> classSystemImpl, ClassLoader classLoader) {
+        try {
+            Field field = classSystemImpl.getDeclaredField("mWebViewProviderPackages");
+            field.setAccessible(true);
+            return field;
+        } catch (NoSuchFieldException renamedByBuild) {
+            // fall through to the type-based lookup below
+        } catch (Throwable t) {
+            logger.e(via + ": failed to read SystemImpl fields", t);
+            return null;
+        }
+        try {
+            Class<?> providerArrayType = Array.newInstance(
+                    classLoader.loadClass("android.webkit.WebViewProviderInfo"), 0).getClass();
+            for (Field candidate : classSystemImpl.getDeclaredFields()) {
+                if (candidate.getType() == providerArrayType) {
+                    candidate.setAccessible(true);
+                    return candidate;
+                }
+            }
+        } catch (Throwable t) {
+            logger.e(via + ": failed to locate the provider field by type", t);
+        }
+        return null;
+    }
+
+    /**
+     * Constructor-hook counterpart of appendTo() for builds where getWebViewPackages() was
+     * inlined away: merges the stock array currently in the field and writes the result back,
+     * so every direct reader of the field observes the appended providers.
+     */
+    public void appendToField(Object systemImpl, Field providerPackagesField,
+                              ClassLoader classLoader) {
+        try {
+            Object merged = appendTo(systemImpl, providerPackagesField.get(systemImpl),
+                    classLoader);
+            if (merged != null) {
+                providerPackagesField.set(systemImpl, merged);
+            }
+        } catch (Throwable t) {
+            logger.e(via + ": failed to append WebView providers", t);
         }
     }
 

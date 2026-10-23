@@ -1,8 +1,13 @@
 package com.thinkdifferent.anywebview;
 
-import static com.thinkdifferent.anywebview.XposedHelpersWraper.findAndHookMethod;
 import static com.thinkdifferent.anywebview.XposedHelpersWraper.findClass;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.findMethodExact;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.hookAllConstructors;
+import static com.thinkdifferent.anywebview.XposedHelpersWraper.hookMethod;
 import static com.thinkdifferent.anywebview.XposedHelpersWraper.log;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -53,8 +58,14 @@ public class AnyWebView extends BaseXposedHookLoadPackage {
             log(VIA + ": SystemImpl not found, nothing hooked");
             return;
         }
-        log(VIA + ": entry point loaded, hooking getWebViewPackages");
-        findAndHookMethod(classSystemImpl, "getWebViewPackages", new XC_MethodHook() {
+        log(VIA + ": entry point loaded");
+        Method getWebViewPackages = findMethodExact(classSystemImpl, "getWebViewPackages");
+        if (getWebViewPackages == null) {
+            hookProviderFieldWrites(classSystemImpl, classLoader);
+            return;
+        }
+        log(VIA + ": hooking getWebViewPackages");
+        hookMethod(getWebViewPackages, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
                 Object merged = injector.appendTo(
@@ -62,6 +73,29 @@ public class AnyWebView extends BaseXposedHookLoadPackage {
                 if (merged != null) {
                     param.setResult(merged);
                 }
+            }
+        });
+    }
+
+    /**
+     * Fallback for builds (seen on Samsung One UI) where R8 inlined getWebViewPackages()
+     * away and every caller reads the provider field directly: rewriting the field right
+     * after each SystemImpl constructor returns covers every reader.
+     */
+    private void hookProviderFieldWrites(Class<?> classSystemImpl, final ClassLoader classLoader) {
+        final Field providerField = injector.findProviderPackagesField(
+                classSystemImpl, classLoader);
+        if (providerField == null) {
+            log(VIA + ": getWebViewPackages missing and no provider field to rewrite,"
+                    + " nothing hooked");
+            return;
+        }
+        log(VIA + ": getWebViewPackages inlined away, hooking SystemImpl constructors,"
+                + " rewriting " + providerField.getName() + " after each returns");
+        hookAllConstructors(classSystemImpl, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                injector.appendToField(param.thisObject, providerField, classLoader);
             }
         });
     }
