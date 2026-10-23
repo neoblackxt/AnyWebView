@@ -51,6 +51,7 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    testImplementation 'junit:junit:4.13.2'
     // Both APIs are compileOnly: the frameworks provide them at runtime, and keeping the
     // libxposed AAR off the runtime graph also keeps its minSdkVersion 26 out of the manifest
     // merge, so the module stays installable on API 24-25 with the de.robv entry point.

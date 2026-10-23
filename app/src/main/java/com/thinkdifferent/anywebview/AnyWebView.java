@@ -61,7 +61,7 @@ public class AnyWebView extends BaseXposedHookLoadPackage {
         log(VIA + ": entry point loaded");
         Method getWebViewPackages = findMethodExact(classSystemImpl, "getWebViewPackages");
         if (getWebViewPackages == null) {
-            hookProviderFieldWrites(classSystemImpl, classLoader);
+            hookProviderFieldAfterConstruction(classSystemImpl, classLoader);
             return;
         }
         log(VIA + ": hooking getWebViewPackages");
@@ -78,19 +78,19 @@ public class AnyWebView extends BaseXposedHookLoadPackage {
     }
 
     /**
-     * Fallback for builds (seen on Samsung One UI) where R8 inlined getWebViewPackages()
-     * away and every caller reads the provider field directly: rewriting the field right
-     * after each SystemImpl constructor returns covers every reader.
+     * Fallback for builds without getWebViewPackages(): rewriting the provider field after
+     * each SystemImpl constructor returns makes the merged array visible to subsequent readers.
      */
-    private void hookProviderFieldWrites(Class<?> classSystemImpl, final ClassLoader classLoader) {
+    private void hookProviderFieldAfterConstruction(
+            Class<?> classSystemImpl, final ClassLoader classLoader) {
         final Field providerField = injector.findProviderPackagesField(
                 classSystemImpl, classLoader);
         if (providerField == null) {
-            log(VIA + ": getWebViewPackages missing and no provider field to rewrite,"
+            log(VIA + ": getWebViewPackages missing and no unambiguous provider field to rewrite,"
                     + " nothing hooked");
             return;
         }
-        log(VIA + ": getWebViewPackages inlined away, hooking SystemImpl constructors,"
+        log(VIA + ": getWebViewPackages missing, hooking SystemImpl constructors,"
                 + " rewriting " + providerField.getName() + " after each returns");
         hookAllConstructors(classSystemImpl, new XC_MethodHook() {
             @Override

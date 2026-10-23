@@ -20,8 +20,8 @@ import io.github.libxposed.api.XposedModuleInterface;
  * Compared with the de.robv adapter in AnyWebView this needs no package-name filtering:
  * onSystemServerStarting() fires only for system_server, which is the sole process this module
  * cares about. On the usual build the interceptor model expresses the append directly --
- * proceed(), then return a longer array -- but on builds where R8 inlined the getter away
- * (see hookProviderFieldWrites) the backing field is rewritten after the constructor instead.
+ * proceed(), then return a longer array -- but when the getter is absent (see
+ * hookProviderFieldAfterConstruction) the backing field is rewritten after construction.
  */
 public class AnyWebViewModule extends XposedModule {
 
@@ -66,8 +66,8 @@ public class AnyWebViewModule extends XposedModule {
             Method getWebViewPackages;
             try {
                 getWebViewPackages = classSystemImpl.getDeclaredMethod("getWebViewPackages");
-            } catch (NoSuchMethodException inlinedAway) {
-                hookProviderFieldWrites(classSystemImpl, classLoader);
+            } catch (NoSuchMethodException missingGetter) {
+                hookProviderFieldAfterConstruction(classSystemImpl, classLoader);
                 return;
             }
             logger.d(VIA + ": hooking getWebViewPackages");
@@ -86,23 +86,23 @@ public class AnyWebViewModule extends XposedModule {
     }
 
     /**
-     * Fallback for builds (seen on Samsung One UI) where R8 inlined getWebViewPackages()
-     * away and every caller reads the provider field directly: rewriting the field right
-     * after each SystemImpl constructor returns covers every reader. All constructors are
-     * hooked rather than assuming the AOSP signature.
+     * Fallback for builds without getWebViewPackages(): rewriting the provider field after
+     * each SystemImpl constructor returns makes the merged array visible to subsequent readers.
+     * All constructors are hooked rather than assuming the AOSP signature.
      */
     // Same API-26-only reasoning as onSystemServerStarting: this class is never loaded on
     // API 24-25, where the de.robv entry point applies.
     @SuppressLint("NewApi")
-    private void hookProviderFieldWrites(Class<?> classSystemImpl, ClassLoader classLoader) {
+    private void hookProviderFieldAfterConstruction(
+            Class<?> classSystemImpl, ClassLoader classLoader) {
         final Field providerField = injector.findProviderPackagesField(
                 classSystemImpl, classLoader);
         if (providerField == null) {
-            logger.w(VIA + ": getWebViewPackages missing and no provider field to rewrite,"
-                    + " nothing hooked");
+            logger.w(VIA + ": getWebViewPackages missing and no unambiguous provider field"
+                    + " to rewrite, nothing hooked");
             return;
         }
-        logger.d(VIA + ": getWebViewPackages inlined away, hooking SystemImpl constructors,"
+        logger.d(VIA + ": getWebViewPackages missing, hooking SystemImpl constructors,"
                 + " rewriting " + providerField.getName() + " after each returns");
         for (Constructor<?> constructor : classSystemImpl.getDeclaredConstructors()) {
             hook(constructor).intercept(new XposedInterface.Hooker() {

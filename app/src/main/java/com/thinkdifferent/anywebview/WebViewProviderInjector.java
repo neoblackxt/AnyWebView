@@ -16,16 +16,17 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Framework-agnostic core of the module: given the WebViewProviderInfo[] that
- * SystemImpl.getWebViewPackages() returned (or, on builds where that getter was inlined
- * away, the backing field it used to read), produce a longer array with every installed
- * WebView provider appended, and with stock entries whose package is installed under a
- * different signature rewritten to carry the installed one.
+ * Framework-agnostic core of the module: given the WebViewProviderInfo[] returned by
+ * SystemImpl.getWebViewPackages(), or read from its backing field when the getter is absent,
+ * produce a longer array with every installed WebView provider appended, and with stock entries
+ * whose package is installed under a different signature rewritten to carry the installed one.
  *
  * This class deliberately has no Xposed dependency of any kind, so the same logic backs both the
  * de.robv (assets/xposed_init) and libxposed (META-INF/xposed/java_init.list) entry points. Each
@@ -96,21 +97,40 @@ public final class WebViewProviderInjector {
                 extraProviders = buildExtraProviders(stockProviders, stockLen, pm, constructor);
             }
 
-            int extraLen = Array.getLength(extraProviders);
-            if (extraLen == 0 && stockSignatureOverrides.isEmpty()) {
-                return null;
-            }
-
-            Object merged = Array.newInstance(classWebViewProviderInfo, stockLen + extraLen);
+            // Constructor chaining can invoke the field hook again with its own merged output.
+            // Filter cached extras against the input so repeated injection is a no-op.
+            List<Object> mergedProviders = new ArrayList<>(
+                    stockLen + Array.getLength(extraProviders));
+            Set<String> packageNames = new HashSet<>();
+            int overrideCount = 0;
             for (int i = 0; i < stockLen; i++) {
                 Object stock = Array.get(stockProviders, i);
                 String packageName = (String) providerPackageNameField.get(stock);
+                packageNames.add(packageName);
                 Object override = stockSignatureOverrides.get(packageName);
-                Array.set(merged, i, override != null ? override : stock);
+                if (override != null && override != stock) {
+                    overrideCount++;
+                }
+                mergedProviders.add(override != null ? override : stock);
             }
-            System.arraycopy(extraProviders, 0, merged, stockLen, extraLen);
+            for (int i = 0; i < Array.getLength(extraProviders); i++) {
+                Object extra = Array.get(extraProviders, i);
+                String packageName = (String) providerPackageNameField.get(extra);
+                if (packageNames.add(packageName)) {
+                    mergedProviders.add(extra);
+                }
+            }
+
+            int extraLen = mergedProviders.size() - stockLen;
+            if (extraLen == 0 && overrideCount == 0) {
+                return null;
+            }
+            Object merged = Array.newInstance(classWebViewProviderInfo, mergedProviders.size());
+            for (int i = 0; i < mergedProviders.size(); i++) {
+                Array.set(merged, i, mergedProviders.get(i));
+            }
             logger.d(via + ": appended " + extraLen + " provider(s) to " + stockLen
-                    + " stock entries, rewrote signatures on " + stockSignatureOverrides.size());
+                    + " stock entries, rewrote signatures on " + overrideCount);
             return merged;
         } catch (Throwable t) {
             logger.e(via + ": failed to append WebView providers", t);
@@ -119,17 +139,17 @@ public final class WebViewProviderInjector {
     }
 
     /**
-     * Resolves the SystemImpl field holding the provider array, for builds (seen on Samsung
-     * One UI) where R8 inlined getWebViewPackages() away and every caller reads the field
-     * directly: the AOSP name first, then the only WebViewProviderInfo[]-typed field in case
-     * the build renamed it. Returns an accessible field, or null when neither exists.
+     * Resolves the SystemImpl field holding the provider array when getWebViewPackages() is
+     * absent and callers read the field directly: the AOSP name first, then the only
+     * WebViewProviderInfo[]-typed field in case the build renamed it. Returns an accessible
+     * field, or null when no field exists or the type-based lookup is ambiguous.
      */
     public Field findProviderPackagesField(Class<?> classSystemImpl, ClassLoader classLoader) {
         try {
             Field field = classSystemImpl.getDeclaredField("mWebViewProviderPackages");
             field.setAccessible(true);
             return field;
-        } catch (NoSuchFieldException renamedByBuild) {
+        } catch (NoSuchFieldException missingAospField) {
             // fall through to the type-based lookup below
         } catch (Throwable t) {
             logger.e(via + ": failed to read SystemImpl fields", t);
@@ -138,11 +158,21 @@ public final class WebViewProviderInjector {
         try {
             Class<?> providerArrayType = Array.newInstance(
                     classLoader.loadClass("android.webkit.WebViewProviderInfo"), 0).getClass();
+            Field providerField = null;
             for (Field candidate : classSystemImpl.getDeclaredFields()) {
-                if (candidate.getType() == providerArrayType) {
-                    candidate.setAccessible(true);
-                    return candidate;
+                if (candidate.getType() != providerArrayType) {
+                    continue;
                 }
+                if (providerField != null) {
+                    logger.w(via + ": multiple WebViewProviderInfo[] fields,"
+                            + " cannot choose the provider field by type");
+                    return null;
+                }
+                providerField = candidate;
+            }
+            if (providerField != null) {
+                providerField.setAccessible(true);
+                return providerField;
             }
         } catch (Throwable t) {
             logger.e(via + ": failed to locate the provider field by type", t);
@@ -151,9 +181,9 @@ public final class WebViewProviderInjector {
     }
 
     /**
-     * Constructor-hook counterpart of appendTo() for builds where getWebViewPackages() was
-     * inlined away: merges the stock array currently in the field and writes the result back,
-     * so every direct reader of the field observes the appended providers.
+     * Constructor-hook counterpart of appendTo() for builds without getWebViewPackages():
+     * merges the stock array currently in the field and writes the result back, so subsequent
+     * direct readers of the field observe the appended providers.
      */
     public void appendToField(Object systemImpl, Field providerPackagesField,
                               ClassLoader classLoader) {
