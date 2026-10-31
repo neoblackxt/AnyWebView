@@ -22,9 +22,14 @@ Framework requirement: v1.4's modern entry point targets libxposed API 101, so t
 
 Latest release compatibility:
 
-* Android 10 / 11 / 12 - compatible with Vector SR + AOSmium/Cromite WebView, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
-* Android 16 - compatible with 16 QPR2, LineageOS, Vector canary + KowSU, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)
-* Android 7-9, 13-15, 17 - compatibility is not established; the hooked internals have been stable since Android 7, and both success and failure reports are welcome
+| Android | Status | Environment (real-device reports) |
+|---|---|---|
+| 7 - 9 | not established | the hooked internals have been stable since Android 7; success and failure reports are welcome |
+| 10 - 12 | confirmed working | Vector SR + AOSmium/Cromite WebView, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32) |
+| 13 - 14 | confirmed working | Vector SR + AOSmium WebView on an SM-G780G (stock One UI 13, LineageOS 22), see [#32](https://github.com/neoblackxt/AnyWebView/issues/32) |
+| 15 | not established | success and failure reports are welcome |
+| 16 | confirmed working | AOSP-style ROMs: LineageOS 16 QPR2 with Vector canary + KowSU, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32); stock Pixel with Cromite, see [#35](https://github.com/neoblackxt/AnyWebView/issues/35). Samsung One UI: requires v1.4.5+ (constructor fallback for the inlined getter), see [#37](https://github.com/neoblackxt/AnyWebView/issues/37) |
+| 17 | unknown | the hooked internals are unchanged on the AOSP master branch, see [Discussion #31](https://github.com/neoblackxt/AnyWebView/discussions/31) |
 
 ### Usage
 
