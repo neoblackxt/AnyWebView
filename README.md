@@ -29,7 +29,7 @@ Latest release compatibility:
 | 13 - 14 | confirmed working | Vector SR + AOSmium WebView on an SM-G780G (stock One UI 13, LineageOS 22), see [#32](https://github.com/neoblackxt/AnyWebView/issues/32) |
 | 15 | confirmed working | Vector SR + AOSmium WebView on an SM-G780G, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32) |
 | 16 | confirmed working | AOSP-style ROMs: LineageOS 16 QPR2 with Vector canary + KowSU, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32); stock Pixel with Cromite, see [#35](https://github.com/neoblackxt/AnyWebView/issues/35). Samsung One UI: requires v1.4.5+ (constructor fallback for the inlined getter), see [#37](https://github.com/neoblackxt/AnyWebView/issues/37) |
-| 17 | unknown | the hooked internals are unchanged on the AOSP master branch, see [Discussion #31](https://github.com/neoblackxt/AnyWebView/discussions/31) |
+| 17 | confirmed working | Vector SR + AOSmium WebView on PixelOS (SM-G780G), see [#32](https://github.com/neoblackxt/AnyWebView/issues/32) |
 
 ### Usage
 
@@ -86,7 +86,7 @@ No — a normally installed WebView APK is enough. Stock Android treats being a 
 
 Does this still work on Android 17?
 
-Compatibility is unknown. The internal interfaces behind this are unchanged on the AOSP master branch (Android 17) and have been stable since Android 7. Details: [Discussion #31](https://github.com/neoblackxt/AnyWebView/discussions/31)
+Yes — confirmed working on Android 17 (PixelOS custom ROM, Vector SR + AOSmium WebView, see [#32](https://github.com/neoblackxt/AnyWebView/issues/32)). The internal interfaces behind this are unchanged on the AOSP master branch and have been stable since Android 7. Details: [Discussion #31](https://github.com/neoblackxt/AnyWebView/discussions/31)
 
 ### Build
 
