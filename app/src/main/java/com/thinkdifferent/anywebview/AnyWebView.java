@@ -98,6 +98,19 @@ public class AnyWebView extends BaseXposedHookLoadPackage {
                 injector.appendToField(param.thisObject, providerField, classLoader);
             }
         });
+        Class<?> serviceClass = findClass("com.android.server.webkit.WebViewUpdateService",
+                classLoader);
+        if (serviceClass != null) {
+            Method onStart = findMethodExact(serviceClass, "onStart");
+            if (onStart != null) {
+                hookMethod(onStart, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        injector.appendToService(param.thisObject, classLoader);
+                    }
+                });
+            }
+        }
     }
 
     @Override

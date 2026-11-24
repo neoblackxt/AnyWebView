@@ -113,6 +113,49 @@ public class WebViewProviderInjectorTest {
         setInjectorField("extraProviders", extras);
     }
 
+    @Test
+    public void serviceStartupInjectsAfterInlinedInitialization() throws Exception {
+        WebViewProviderInfo stock = provider("stock");
+        WebViewProviderInfo extra = provider("extra");
+        seedCache(new WebViewProviderInfo[]{extra}, Collections.emptyMap());
+        LateSystemImpl systemImpl = new LateSystemImpl();
+        Field field = injector.findProviderPackagesField(LateSystemImpl.class, CLASS_LOADER);
+
+        // The constructor hook sees no providers on Samsung's optimized Android 17 build.
+        injector.appendToField(systemImpl, field, CLASS_LOADER);
+        assertNull(systemImpl.mWebViewProviderPackages);
+        systemImpl.mWebViewProviderPackages = new WebViewProviderInfo[]{stock};
+        FakeService service = new FakeService(systemImpl);
+
+        injector.appendToService(service, CLASS_LOADER);
+        assertEquals(2, systemImpl.mWebViewProviderPackages.length);
+        assertSame(stock, systemImpl.mWebViewProviderPackages[0]);
+        assertSame(extra, systemImpl.mWebViewProviderPackages[1]);
+        Object firstMerged = systemImpl.mWebViewProviderPackages;
+        injector.appendToService(service, CLASS_LOADER);
+        assertSame(firstMerged, systemImpl.mWebViewProviderPackages);
+    }
+
+    private static final class LateSystemImpl {
+        private WebViewProviderInfo[] mWebViewProviderPackages;
+    }
+
+    private static final class FakeService {
+        private final FakeServiceImpl mImpl;
+
+        FakeService(LateSystemImpl systemImpl) {
+            mImpl = new FakeServiceImpl(systemImpl);
+        }
+    }
+
+    private static final class FakeServiceImpl {
+        private final LateSystemImpl mSystemInterface;
+
+        FakeServiceImpl(LateSystemImpl systemImpl) {
+            mSystemInterface = systemImpl;
+        }
+    }
+
     private void setInjectorField(String name, Object value) throws Exception {
         Field field = WebViewProviderInjector.class.getDeclaredField(name);
         field.setAccessible(true);

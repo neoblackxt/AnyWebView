@@ -198,6 +198,24 @@ public final class WebViewProviderInjector {
         }
     }
 
+    /** Handles ROMs that initialize SystemImpl's fields outside its own constructor. */
+    public void appendToService(Object service, ClassLoader classLoader) {
+        try {
+            Field implField = service.getClass().getDeclaredField("mImpl");
+            implField.setAccessible(true);
+            Object impl = implField.get(service);
+            Field systemField = impl.getClass().getDeclaredField("mSystemInterface");
+            systemField.setAccessible(true);
+            Object systemImpl = systemField.get(impl);
+            Field providers = findProviderPackagesField(systemImpl.getClass(), classLoader);
+            if (providers != null) {
+                appendToField(systemImpl, providers, classLoader);
+            }
+        } catch (Throwable t) {
+            logger.e(via + ": failed to append providers at WebView service startup", t);
+        }
+    }
+
     /**
      * Resolves a system_server Context, which yields a PackageManager privileged enough to
      * enumerate every installed package with signatures.

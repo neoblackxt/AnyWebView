@@ -50,6 +50,16 @@ public class AnyWebViewModule extends XposedModule {
     };
 
     private final WebViewProviderInjector injector = new WebViewProviderInjector(VIA, logger);
+    private boolean hooksInstalled;
+
+    @Override
+    public void onModuleLoaded(XposedModuleInterface.ModuleLoadedParam param) {
+        if (param.isSystemServer()) {
+            // Some optimized ROM/framework combinations miss the later lifecycle callback.
+            // ActivityThread.attach runs with the services class loader on the server thread.
+            installHooks(Thread.currentThread().getContextClassLoader());
+        }
+    }
 
     // hook() takes java.lang.reflect.Executable (API 26+), but this suppression is safe:
     // libxposed frameworks only exist on API 26+ (the api AAR declares minSdkVersion 26),
@@ -57,7 +67,14 @@ public class AnyWebViewModule extends XposedModule {
     @SuppressLint("NewApi")
     @Override
     public void onSystemServerStarting(XposedModuleInterface.SystemServerStartingParam param) {
-        final ClassLoader classLoader = param.getClassLoader();
+        installHooks(param.getClassLoader());
+    }
+
+    @SuppressLint("NewApi")
+    private synchronized void installHooks(final ClassLoader classLoader) {
+        if (hooksInstalled || classLoader == null) {
+            return;
+        }
         try {
             logger.d(VIA + ": entry point loaded (framework=" + getFrameworkName()
                     + " " + getFrameworkVersion() + ", api=" + getApiVersion() + ")");
@@ -68,6 +85,7 @@ public class AnyWebViewModule extends XposedModule {
                 getWebViewPackages = classSystemImpl.getDeclaredMethod("getWebViewPackages");
             } catch (NoSuchMethodException missingGetter) {
                 hookProviderFieldAfterConstruction(classSystemImpl, classLoader);
+                hooksInstalled = true;
                 return;
             }
             logger.d(VIA + ": hooking getWebViewPackages");
@@ -80,6 +98,7 @@ public class AnyWebViewModule extends XposedModule {
                     return merged != null ? merged : stockProviders;
                 }
             });
+            hooksInstalled = true;
         } catch (Throwable t) {
             logger.e(VIA + ": failed to hook SystemImpl", t);
         }
@@ -94,7 +113,7 @@ public class AnyWebViewModule extends XposedModule {
     // API 24-25, where the de.robv entry point applies.
     @SuppressLint("NewApi")
     private void hookProviderFieldAfterConstruction(
-            Class<?> classSystemImpl, ClassLoader classLoader) {
+            Class<?> classSystemImpl, ClassLoader classLoader) throws ReflectiveOperationException {
         final Field providerField = injector.findProviderPackagesField(
                 classSystemImpl, classLoader);
         if (providerField == null) {
@@ -114,5 +133,17 @@ public class AnyWebViewModule extends XposedModule {
                 }
             });
         }
+        // Samsung Android 17 also inlines SystemImpl's initialization into the service
+        // constructor. Its empty constructor returns before the provider field is assigned.
+        Method onStart = classLoader.loadClass("com.android.server.webkit.WebViewUpdateService")
+                .getDeclaredMethod("onStart");
+        hook(onStart).intercept(new XposedInterface.Hooker() {
+            @Override
+            public Object intercept(XposedInterface.Chain chain) throws Throwable {
+                injector.appendToService(chain.getThisObject(), classLoader);
+                return chain.proceed();
+            }
+        });
+        logger.d(VIA + ": hooked WebViewUpdateService.onStart before provider registration");
     }
 }
