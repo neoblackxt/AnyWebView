@@ -22,6 +22,10 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // Marks the on-device test build as the PR #39 diagnostic variant.
+            versionNameSuffix "-pr39-diag"
+        }
         release {
             if (System.getenv("KEYSTORE_PASSWORD") != null) {
                 signingConfig signingConfigs.release

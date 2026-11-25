@@ -51,6 +51,9 @@ public class AnyWebView extends BaseXposedHookLoadPackage {
         if (!lpparam.packageName.equals("android")) {
             return;
         }
+        android.util.Log.i("anywebview", "[diag] uptime=" + android.os.SystemClock.uptimeMillis()
+                + " thread=" + Thread.currentThread().getName()
+                + " de.robv handleLoadPackage android, process=" + lpparam.processName);
         final ClassLoader classLoader = lpparam.classLoader;
         Class<?> classSystemImpl = findClass(
                 "com.android.server.webkit.SystemImpl", classLoader);
